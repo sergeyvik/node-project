@@ -8,6 +8,30 @@ var app = require('../app');
 var debug = require('debug')('node-project:server');
 var http = require('http');
 
+
+//Мой код
+var mysql = require("mysql");
+var connection = mysql.createConnection({
+    host: 'localhost',
+    user: 'admin',
+    password: '498777',
+    database: 'tvp_test',
+    port: 3308
+});
+
+connection.connect();
+var query = connection.query("SELECT * FROM `ratings`", function (error, results, fields) {
+    if(error) throw error;
+    console.log(JSON.stringify(results));
+    console.log(JSON.stringify(fields));
+});
+connection.end();
+
+app.post("/", function (req, res) {
+    console.log(req.headers['content-length']);
+    console.log(req.headers['content-type']);
+});
+
 /**
  * Get port from environment and store in Express.
  */
