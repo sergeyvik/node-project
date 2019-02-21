@@ -26,14 +26,14 @@ var query = connection.query("SELECT * FROM `ratings`", function (error, results
     console.log(JSON.stringify(fields));
 });
 connection.end();
-
+/*
 app.post("/", function (req, res) {
     console.log(req.headers['content-length']);
     console.log(req.headers['content-type']);
     res.statusCode = 200;
     res.end();
 });
-
+*/
 /**
  * Get port from environment and store in Express.
  */
