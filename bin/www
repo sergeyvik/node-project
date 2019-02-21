@@ -30,6 +30,8 @@ connection.end();
 app.post("/", function (req, res) {
     console.log(req.headers['content-length']);
     console.log(req.headers['content-type']);
+    res.statusCode = 200;
+    res.end();
 });
 
 /**
