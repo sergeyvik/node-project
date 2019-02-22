@@ -99,12 +99,16 @@ let channelsIcons = function(channels) {
     return filesFullPath;
 }
 
-let channelsRatings = function(channels, ratingsRec) {
+let programsRatings = function(channels, ratingsReq) {
     let ratings = [];
+    let ratingsExist = [];
+    for (let rating of ratingsReq) {
+        ratingsExist.push(rating.rating_name);
+    }
     for (let channel of channels) {
         for (let program of channel.programs) {
             if (program.program_rating && ratings.indexOf(program.program_rating) === -1 &&
-                ratingsRec.indexOf(program.program_rating) === -1) {
+                ratingsExist.indexOf(program.program_rating) === -1) {
                 ratings.push(program.program_rating);
             }
         }
@@ -112,12 +116,14 @@ let channelsRatings = function(channels, ratingsRec) {
     return ratings;
 }
 
-let channelsCategories = function(channels, categoriesRec) {
+let programsCategories = function(channels, categoriesReq) {
     let categories = [];
+    for (let category of categoriesReq) {
+        categories.push(category.category_name);
+    }
     for (let channel of channels) {
         for (let program of channel.programs) {
-            if (program.program_category && categories.indexOf(program.program_category) === -1 &&
-                categoriesRec.indexOf(program.program_category) === -1) {
+            if (program.program_category && categories.indexOf(program.program_category) === -1) {
                 categories.push(program.program_category);
             }
         }
@@ -127,5 +133,6 @@ let channelsCategories = function(channels, categoriesRec) {
 
 module.exports.xmlFileParse = xmlFileParse;
 module.exports.channelsIcons = channelsIcons;
-module.exports.channelsRatings = channelsRatings;
-module.exports.channelsCategories = channelsCategories;
+module.exports.programsRatings = programsRatings;
+module.exports.programsCategories = programsCategories;
+

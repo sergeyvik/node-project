@@ -8,9 +8,32 @@ var app = require('../app');
 var debug = require('debug')('node-project:server');
 var http = require('http');
 let mysqlFunc = require('../public/javascripts/mysqlFunctions');
-mysqlFunc.ratingsRec((results) => {
-    console.log(JSON.stringify(results));
+/*
+mysqlFunc.ratingsRecord((data, results) => {
+    console.log(results);
 });
+*/
+//mysqlFunc.idColumnFromTable("rating_id", "ratings", test => {console.log(test);});
+/*
+mysqlFunc.idColumnFromTable("rating_id", "ratings", test1 => {
+    console.log(test1);
+    let test = test1;
+    console.log(test.length);
+    console.log(mysqlFunc.lastIdInTable(test));
+});
+*/
+//Получаем id последней записи в таблице
+mysqlFunc.lastIdInTable("rating_id", "ratings", test => {
+    console.log(test[0].id);
+});
+//Получаем массив наименований справочника
+mysqlFunc.masRecordsInColumn("rating_name", "ratings", test => {
+    console.log(test);
+});
+
+//mysqlFunc.ratingsRequest((results) => {
+//    console.log(JSON.stringify(results));
+//});
 //console.log(mysqlFunc.categoriesRec());
 //Мой код
 /*
