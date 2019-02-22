@@ -12,8 +12,7 @@ router.post("/", function (req, res) {
     console.log(req.headers['content-type']);
     //res.statusCode = 200;
     res.end();
-    let data = xmlparse(req.files.fileXML.data.toString());
-    console.log(data.length);
+    let data = xmlparse.xmlFileParse(req.files.fileXML.data.toString());
 });
 
 module.exports = router;

@@ -7,9 +7,13 @@
 var app = require('../app');
 var debug = require('debug')('node-project:server');
 var http = require('http');
-
-
+let mysqlFunc = require('../public/javascripts/mysqlFunctions');
+mysqlFunc.ratingsRec((results) => {
+    console.log(JSON.stringify(results));
+});
+//console.log(mysqlFunc.categoriesRec());
 //Мой код
+/*
 var mysql = require("mysql");
 var connection = mysql.createConnection({
     host: 'localhost',
@@ -26,6 +30,8 @@ var query = connection.query("SELECT * FROM `ratings`", function (error, results
     console.log(JSON.stringify(fields));
 });
 connection.end();
+*/
+
 /*
 app.post("/", function (req, res) {
     console.log(req.headers['content-length']);

@@ -3,12 +3,10 @@ var test = require('./test');
 test(8);
 */
 const parseXml = require('@rgrove/parse-xml');
-let fs=require("fs");
-let xmlparse = function(xmlfile) {
-    //let data=fs.readFileSync(xmlfile, {encoding: 'utf-8'});
+let xmlFileParse = function(xmlFile) {
     let channels = [];
     let programs = [];
-    let parsedXML = parseXml(xmlfile);
+    let parsedXML = parseXml(xmlFile);
 
     for (const el of parsedXML['children'][0]['children']) {
         if (el.name === 'channel') {
@@ -79,4 +77,55 @@ let xmlparse = function(xmlfile) {
     return channels;
 }
 
-module.exports = xmlparse;
+let http = require('http');
+let fs = require("fs");
+
+let channelsIcons = function(channels) {
+    let uploadDir = "../images/";
+    let filesFullPath = [];
+    for (let channel of channels) {
+        if (channel.channel_icon && filesFullPath.indexOf(channel.channel_icon) === -1) {
+            filesFullPath.push(channel.channel_icon);
+        }
+    }
+    filesFullPath.forEach(function (fileFullPath) {
+        let fileName = fileFullPath.slice(fileFullPath.lastIndexOf('/') + 1, fileFullPath.length);
+        let file = fs.createWriteStream(uploadDir + fileName);
+        let request = http.get(fileFullPath, function (response) {
+            response.pipe(file);
+        });
+        fs.writeFileSync(uploadDir + fileName, request, "utf8");
+    })
+    return filesFullPath;
+}
+
+let channelsRatings = function(channels, ratingsRec) {
+    let ratings = [];
+    for (let channel of channels) {
+        for (let program of channel.programs) {
+            if (program.program_rating && ratings.indexOf(program.program_rating) === -1 &&
+                ratingsRec.indexOf(program.program_rating) === -1) {
+                ratings.push(program.program_rating);
+            }
+        }
+    }
+    return ratings;
+}
+
+let channelsCategories = function(channels, categoriesRec) {
+    let categories = [];
+    for (let channel of channels) {
+        for (let program of channel.programs) {
+            if (program.program_category && categories.indexOf(program.program_category) === -1 &&
+                categoriesRec.indexOf(program.program_category) === -1) {
+                categories.push(program.program_category);
+            }
+        }
+    }
+    return categories;
+}
+
+module.exports.xmlFileParse = xmlFileParse;
+module.exports.channelsIcons = channelsIcons;
+module.exports.channelsRatings = channelsRatings;
+module.exports.channelsCategories = channelsCategories;
