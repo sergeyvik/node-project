@@ -99,20 +99,22 @@ let channelsIcons = function(channels) {
     return filesFullPath;
 }
 
-let programsRatings = function(channels, ratingsReq) {
+let programsRatings = function(channels) {    //(channels, ratingsReq)
     let ratings = [];
-    let ratingsExist = [];
-    for (let rating of ratingsReq) {
-        ratingsExist.push(rating.rating_name);
-    }
     for (let channel of channels) {
         for (let program of channel.programs) {
-            if (program.program_rating && ratings.indexOf(program.program_rating) === -1 &&
-                ratingsExist.indexOf(program.program_rating) === -1) {
+            if (program.program_rating && ratings.indexOf(program.program_rating) === -1) {
                 ratings.push(program.program_rating);
             }
         }
     }
+    /*
+    for (let elem in ratingsReq) {
+        if (ratings.indexOf(elem) > -1) {
+            ratings.splice(ratings.indexOf(elem), 1);
+        }
+    }
+    */
     return ratings;
 }
 
@@ -131,8 +133,24 @@ let programsCategories = function(channels, categoriesReq) {
     return categories;
 }
 
+let arrayForRecordInDb = function (array, object) {
+    let result = [];
+    for (let i = 0; i < array.length; i++) {
+        result.push(array[i].toString());
+    }
+    for (let elem in object) {
+        if (result.indexOf(elem) > -1) {
+            result.splice(result.indexOf(elem), 1);
+        }
+    }
+    //console.log(array);
+    //console.log(object);
+    return result;
+}
+
 module.exports.xmlFileParse = xmlFileParse;
 module.exports.channelsIcons = channelsIcons;
 module.exports.programsRatings = programsRatings;
 module.exports.programsCategories = programsCategories;
+module.exports.arrayForRecordInDb = arrayForRecordInDb;
 

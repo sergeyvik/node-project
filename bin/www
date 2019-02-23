@@ -8,6 +8,7 @@ var app = require('../app');
 var debug = require('debug')('node-project:server');
 var http = require('http');
 let mysqlFunc = require('../public/javascripts/mysqlFunctions');
+let xmlparse = require('../public/javascripts/xmlparse');
 /*
 mysqlFunc.ratingsRecord((data, results) => {
     console.log(results);
@@ -23,18 +24,24 @@ mysqlFunc.idColumnFromTable("rating_id", "ratings", test1 => {
 });
 */
 //Получаем id последней записи в таблице
-mysqlFunc.lastIdInTable("rating_id", "ratings", test => {
-    console.log(test[0].id);
-});
+//mysqlFunc.lastIdInTable("rating_id", "ratings", test => {
+    //console.log(test[0].id);
+//});
 //Получаем массив наименований справочника
-mysqlFunc.masRecordsInColumn("rating_name", "ratings", test => {
+mysqlFunc.masRecordsInBd("rating_id", "rating_name", "ratings", test => {
     console.log(test);
 });
 
-//mysqlFunc.ratingsRequest((results) => {
-//    console.log(JSON.stringify(results));
-//});
+mysqlFunc.ratingsRequest((results) => {
+    //console.log(results);
+});
+let qwer = ['0+', 18, '12+', 0];
+let asdf = { '0+': 0, '18+': 1, '18': 2 };
+//let ratingsForRecords = xmlparse.arrayForRecordInDb(qwer, asdf);
+//console.log(ratingsForRecords);
+
 //console.log(mysqlFunc.categoriesRec());
+
 //Мой код
 /*
 var mysql = require("mysql");

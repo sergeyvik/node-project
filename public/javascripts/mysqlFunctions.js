@@ -27,10 +27,18 @@ let idColumnFromTable = function(columnName, tableName, callback) {
 
 let ratingsRequest = function(callback) {
     connection.query("SELECT rating_id, rating_name FROM ratings", function (error, results, fields) {
-        if(error) throw error;
-        //console.log(JSON.stringify(results));
-        //console.log(JSON.stringify(fields));
-        callback(results);
+        let result = {};
+        if(error) {
+            //throw error;
+            console.log("fsdgshg");
+        } else {
+            for (let elem of results) {
+                let name = "";
+                name += elem.rating_name;
+                result[name] = elem.rating_id;
+            }
+            callback(result);
+        }
     });
 }
 
@@ -63,10 +71,15 @@ let categoriesRequest = function(callback) {
     });
 }
 
-let masRecordsInColumn = function(columnName, tableName, callback) {
-    connection.query(`SELECT ${columnName} FROM ${tableName}`, function (error, results, fields) {
+let masRecordsInBd = function(columnName1, columnName2, tableName, callback) {
+    connection.query(`SELECT ${columnName1}, ${columnName2} FROM ${tableName}`, function (error, results, fields) {
+        let result = {};
         if(error) throw error;
-        callback(results.map(x=>x[columnName]));
+        for (let elem of results) {
+            result[elem[columnName2]] = elem[columnName1];
+            //console.log(`${result[elem[columnName2]]}=${[elem[columnName2]]}`);
+        }
+        callback(result);
     });
 }
 
@@ -77,11 +90,25 @@ let lastIdInTable = function(columnName, tableName, callback) {
     });
 }
 
+let recordInDirectoryDb = function(columnName1, columnName2, tableName, data, id) {
+    let sql;
+    let i = id + 1;
+    for (let elem of data) {
+        sql = `insert into ${tableName} (${columnName1}, ${columnName2}) values (${i}, ${elem});`;
+        connection.query(sql, function (error, results, fields) {
+            if (error) throw error;
+        });
+        i++;
+    }
+
+}
+
 module.exports.ratingsRequest = ratingsRequest;
 module.exports.ratingsRecord = ratingsRecord;
 module.exports.categoriesRequest = categoriesRequest;
 
 module.exports.idColumnFromTable = idColumnFromTable;
 
-module.exports.masRecordsInColumn = masRecordsInColumn;
+module.exports.masRecordsInBd = masRecordsInBd;
 module.exports.lastIdInTable = lastIdInTable;
+module.exports.recordInDirectoryDb = recordInDirectoryDb;
