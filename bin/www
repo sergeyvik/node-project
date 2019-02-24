@@ -14,6 +14,17 @@ mysqlFunc.ratingsRecord((data, results) => {
     console.log(results);
 });
 */
+/*
+let cat = [ 'Развлекательные',
+    'Информационные',
+    'Познавательные',
+    'Сериал',
+    'Художественный фильм',
+    'Детям',
+    'Для взрослых',
+    'Спорт' ];
+mysqlFunc.recordInDirectoryDb("category_id", "program_category", "categories", cat, null);
+*/
 //mysqlFunc.idColumnFromTable("rating_id", "ratings", test => {console.log(test);});
 /*
 mysqlFunc.idColumnFromTable("rating_id", "ratings", test1 => {
@@ -28,7 +39,10 @@ mysqlFunc.idColumnFromTable("rating_id", "ratings", test1 => {
     //console.log(test[0].id);
 //});
 //Получаем массив наименований справочника
-mysqlFunc.masRecordsInBd("rating_id", "rating_name", "ratings", test => {
+mysqlFunc.masRecordsInBd("rating_id", "program_rating", "ratings", test => {
+    console.log(test);
+});
+mysqlFunc.masRecordsInBd("category_id", "program_category", "categories", test => {
     console.log(test);
 });
 

@@ -3,7 +3,7 @@ const connection = mysql.createConnection({
     host: 'localhost',
     user: 'admin',
     password: '498777',
-    database: 'tvp_test',
+    database: 'tvp_db',
     port: 3308
 });
 connection.connect();
@@ -23,24 +23,23 @@ let idColumnFromTable = function(columnName, tableName, callback) {
         if(error) throw error;
         callback(results.map(x=>x[columnName]));
     });
-}
+};
 
 let ratingsRequest = function(callback) {
-    connection.query("SELECT rating_id, rating_name FROM ratings", function (error, results, fields) {
+    connection.query("SELECT rating_id, program_rating FROM ratings", function (error, results, fields) {
         let result = {};
         if(error) {
-            //throw error;
-            console.log("fsdgshg");
+            throw error;
         } else {
             for (let elem of results) {
                 let name = "";
-                name += elem.rating_name;
+                name += elem.program_rating;
                 result[name] = elem.rating_id;
             }
             callback(result);
         }
     });
-}
+};
 
 let ratingsRecord = function(data, callback) {
     let id = 0;
@@ -53,7 +52,7 @@ let ratingsRecord = function(data, callback) {
     });
     let request = "";
     for (let elem of data) {
-        request += `insert into ratings (rating_id, rating_name) values (${id}, "${elem}");`;
+        request += `insert into ratings (rating_id, program_rating) values (${id}, "${elem}");`;
         id++;
     }
     connection.query(request, function (error, results, fields) {
@@ -62,14 +61,14 @@ let ratingsRecord = function(data, callback) {
         //console.log(JSON.stringify(fields));
         callback(results);
     });
-}
+};
 
 let categoriesRequest = function(callback) {
     connection.query("SELECT * FROM `category`", function (error, results, fields) {
         if(error) throw error;
         callback(results);
     });
-}
+};
 
 let masRecordsInBd = function(columnName1, columnName2, tableName, callback) {
     connection.query(`SELECT ${columnName1}, ${columnName2} FROM ${tableName}`, function (error, results, fields) {
@@ -81,27 +80,35 @@ let masRecordsInBd = function(columnName1, columnName2, tableName, callback) {
         }
         callback(result);
     });
-}
+};
 
 let lastIdInTable = function(columnName, tableName, callback) {
     connection.query(`SELECT max(${columnName}) as id FROM ${tableName}`, function (error, results, fields) {
         if(error) throw error;
         callback(results);
     });
-}
+};
 
 let recordInDirectoryDb = function(columnName1, columnName2, tableName, data, id) {
     let sql;
-    let i = id + 1;
+    let i;
+    if (id === null) {
+        i = 1;
+    } else {
+        i = id + 1;
+    }
     for (let elem of data) {
-        sql = `insert into ${tableName} (${columnName1}, ${columnName2}) values (${i}, ${elem});`;
+        if (typeof elem === "number") {
+            sql = `insert into ${tableName} (${columnName1}, ${columnName2}) values (${i}, ${elem});`;
+        } else if (typeof elem === "string") {
+            sql = `insert into ${tableName} (${columnName1}, ${columnName2}) values (${i}, "${elem}");`;
+        }
         connection.query(sql, function (error, results, fields) {
             if (error) throw error;
         });
         i++;
-    }
-
-}
+    };
+};
 
 module.exports.ratingsRequest = ratingsRequest;
 module.exports.ratingsRecord = ratingsRecord;

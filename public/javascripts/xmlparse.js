@@ -75,7 +75,7 @@ let xmlFileParse = function(xmlFile) {
         }
     }
     return channels;
-}
+};
 
 let http = require('http');
 let fs = require("fs");
@@ -95,9 +95,9 @@ let channelsIcons = function(channels) {
             response.pipe(file);
         });
         fs.writeFileSync(uploadDir + fileName, request, "utf8");
-    })
+    });
     return filesFullPath;
-}
+};
 
 let programsRatings = function(channels) {    //(channels, ratingsReq)
     let ratings = [];
@@ -116,13 +116,10 @@ let programsRatings = function(channels) {    //(channels, ratingsReq)
     }
     */
     return ratings;
-}
+};
 
-let programsCategories = function(channels, categoriesReq) {
+let programsCategories = function(channels) {
     let categories = [];
-    for (let category of categoriesReq) {
-        categories.push(category.category_name);
-    }
     for (let channel of channels) {
         for (let program of channel.programs) {
             if (program.program_category && categories.indexOf(program.program_category) === -1) {
@@ -131,7 +128,7 @@ let programsCategories = function(channels, categoriesReq) {
         }
     }
     return categories;
-}
+};
 
 let arrayForRecordInDb = function (array, object) {
     let result = [];
@@ -146,7 +143,7 @@ let arrayForRecordInDb = function (array, object) {
     //console.log(array);
     //console.log(object);
     return result;
-}
+};
 
 module.exports.xmlFileParse = xmlFileParse;
 module.exports.channelsIcons = channelsIcons;

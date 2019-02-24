@@ -9,46 +9,27 @@ router.get('/', function(req, res, next) {
 });
 
 router.post("/", function (req, res) {
-    //console.log(req.headers['content-length']);
-    //console.log(req.headers['content-type']);
-    //res.statusCode = 200;
-
     data = xmlparse.xmlFileParse(req.files.fileXML.data.toString());
 
-    mysqlFunc.masRecordsInBd("rating_id", "rating_name", "ratings", res => {
-        //let ratingsInBd = mysqlFunc.ratingsRequest;
+    mysqlFunc.masRecordsInBd("rating_id", "program_rating", "ratings", res => {
         let ratingsInFile = xmlparse.programsRatings(data);
-
-        console.log(`masRecordsInBd`);
-        console.log(res);
-        //console.log(`ratingsInBd ${ratingsInBd}`);
-        console.log(`ratingsInFile ${ratingsInFile}`);
-
         let ratingsForRecords = xmlparse.arrayForRecordInDb(ratingsInFile, res);
-        //console.log(ratingsForRecords);
 
         mysqlFunc.lastIdInTable("rating_id", "ratings", res => {
-            console.log(`Id ${res[0].id}`)
-            console.log("dfgdhhdh");
-            console.log(ratingsForRecords);
             for (let elem of ratingsForRecords) {
                 elem = Number(elem);
             }
-            mysqlFunc.recordInDirectoryDb("rating_id", "rating_name","ratings", ratingsForRecords, res[0].id);
-            console.log(ratingsForRecords);
-        })
-    })
-
-
-    //let test;
-    //mysqlFunc.ratingsRequest((test) => {console.log(test);}) ;
-    /*
-    mysqlFunc.idColumnFromTable("rating_id", "ratings", test => {
-        console.log(test);
-        //console.log(mysqlFunc.lastIdInTable(test));
+            mysqlFunc.recordInDirectoryDb("rating_id", "program_rating", "ratings", ratingsForRecords, res[0].id);
+        });
     });
-    */
-    //console.log(mysqlFunc.ratingsRequest);
+
+    mysqlFunc.masRecordsInBd("category_id", "program_category", "categories", res => {
+        let categoriesInFile = xmlparse.programsCategories(data);
+        let categoriesForRecords = xmlparse.arrayForRecordInDb(categoriesInFile, res);
+        mysqlFunc.lastIdInTable("category_id", "categories", res => {
+            mysqlFunc.recordInDirectoryDb("category_id", "program_category", "categories", categoriesForRecords, res[0].id);
+        });
+    });
 
     res.end();
 });
