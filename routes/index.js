@@ -11,6 +11,11 @@ router.get('/', function(req, res, next) {
 router.post("/", function (req, res) {
     data = xmlparse.xmlFileParse(req.files.fileXML.data.toString());
 
+    let filesFullPath = xmlparse.channelsIcons(data);
+    //Список иконок из файла, для сравнения со списком существующих иконок
+    let filesNames = xmlparse.iconsNames(filesFullPath);
+    xmlparse.writeIcons(filesFullPath, "public/images/");
+
     mysqlFunc.masRecordsInBd("rating_id", "program_rating", "ratings", res => {
         let ratingsInFile = xmlparse.programsRatings(data);
         let ratingsForRecords = xmlparse.arrayForRecordInDb(ratingsInFile, res);
@@ -29,6 +34,16 @@ router.post("/", function (req, res) {
         mysqlFunc.lastIdInTable("category_id", "categories", res => {
             mysqlFunc.recordInDirectoryDb("category_id", "program_category", "categories", categoriesForRecords, res[0].id);
         });
+    });
+
+    mysqlFunc.masRecordsInBd("channel_id", "channel_name", "channels", res => {
+        let channelsInFiles = xmlparse.channelsData(data);
+        console.log(channelsInFiles);
+        console.log(res);
+        let channelsForRecords = xmlparse.arrayForRecordInDb(channelsInFiles, res);
+        mysqlFunc.recordChannels("channel_id", "channel_icon", "channel_name", "channels", channelsForRecords);
+        console.log(channelsForRecords);
+
     });
 
     res.end();

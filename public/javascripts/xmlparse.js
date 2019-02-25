@@ -80,14 +80,39 @@ let xmlFileParse = function(xmlFile) {
 let http = require('http');
 let fs = require("fs");
 
+let channelsData = function(channels) {
+    let result = {};
+    for (let channel of channels) {
+        result[channel.channel_name] = [];
+        result[channel.channel_name][0] = channel.channel_id;
+        if (channel.channel_icon) {
+            result[channel.channel_name][1] = channel.channel_icon;
+        }
+    }
+    return result;
+};
+
 let channelsIcons = function(channels) {
-    let uploadDir = "../images/";
+    //let uploadDir = "../images/";
     let filesFullPath = [];
     for (let channel of channels) {
         if (channel.channel_icon && filesFullPath.indexOf(channel.channel_icon) === -1) {
             filesFullPath.push(channel.channel_icon);
         }
     }
+    return filesFullPath;
+};
+
+let iconsNames = function(filesFullPath) {
+    let filesNames = [];
+    filesFullPath.forEach(function (fileFullPath) {
+        let fileName = fileFullPath.slice(fileFullPath.lastIndexOf('/') + 1, fileFullPath.length);
+        filesNames.push(fileName);
+    });
+    return filesNames;
+};
+
+let writeIcons = function(filesFullPath, uploadDir) {
     filesFullPath.forEach(function (fileFullPath) {
         let fileName = fileFullPath.slice(fileFullPath.lastIndexOf('/') + 1, fileFullPath.length);
         let file = fs.createWriteStream(uploadDir + fileName);
@@ -96,7 +121,6 @@ let channelsIcons = function(channels) {
         });
         fs.writeFileSync(uploadDir + fileName, request, "utf8");
     });
-    return filesFullPath;
 };
 
 let programsRatings = function(channels) {    //(channels, ratingsReq)
@@ -108,13 +132,6 @@ let programsRatings = function(channels) {    //(channels, ratingsReq)
             }
         }
     }
-    /*
-    for (let elem in ratingsReq) {
-        if (ratings.indexOf(elem) > -1) {
-            ratings.splice(ratings.indexOf(elem), 1);
-        }
-    }
-    */
     return ratings;
 };
 
@@ -140,14 +157,29 @@ let arrayForRecordInDb = function (array, object) {
             result.splice(result.indexOf(elem), 1);
         }
     }
-    //console.log(array);
-    //console.log(object);
+    return result;
+};
+
+let arrayForRecordInDb2 = function (array, object) {
+    let result = [];
+    for (let i = 0; i < array.length; i++) {
+        result.push(array[i].toString());
+    }
+    for (let elem in object) {
+        if (result.indexOf(elem) > -1) {
+            result.splice(result.indexOf(elem), 1);
+        }
+    }
     return result;
 };
 
 module.exports.xmlFileParse = xmlFileParse;
 module.exports.channelsIcons = channelsIcons;
+module.exports.channelsData = channelsData;
+module.exports.iconsNames = iconsNames;
+module.exports.writeIcons = writeIcons;
 module.exports.programsRatings = programsRatings;
 module.exports.programsCategories = programsCategories;
 module.exports.arrayForRecordInDb = arrayForRecordInDb;
+module.exports.arrayForRecordInDb2 = arrayForRecordInDb2;
 

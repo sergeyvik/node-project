@@ -17,14 +17,15 @@ let query = connection.query("SELECT * FROM `ratings`", function (error, results
 });
 connection.end();
 */
-
+/*
 let idColumnFromTable = function(columnName, tableName, callback) {
     connection.query(`SELECT ${columnName} FROM ${tableName}`, function (error, results, fields) {
         if(error) throw error;
         callback(results.map(x=>x[columnName]));
     });
 };
-
+*/
+/*
 let ratingsRequest = function(callback) {
     connection.query("SELECT rating_id, program_rating FROM ratings", function (error, results, fields) {
         let result = {};
@@ -40,7 +41,8 @@ let ratingsRequest = function(callback) {
         }
     });
 };
-
+*/
+/*
 let ratingsRecord = function(data, callback) {
     let id = 0;
     this.ratingsRequest((results) => {
@@ -69,14 +71,13 @@ let categoriesRequest = function(callback) {
         callback(results);
     });
 };
-
+*/
 let masRecordsInBd = function(columnName1, columnName2, tableName, callback) {
     connection.query(`SELECT ${columnName1}, ${columnName2} FROM ${tableName}`, function (error, results, fields) {
         let result = {};
         if(error) throw error;
         for (let elem of results) {
             result[elem[columnName2]] = elem[columnName1];
-            //console.log(`${result[elem[columnName2]]}=${[elem[columnName2]]}`);
         }
         callback(result);
     });
@@ -107,15 +108,31 @@ let recordInDirectoryDb = function(columnName1, columnName2, tableName, data, id
             if (error) throw error;
         });
         i++;
-    };
+    }
 };
 
-module.exports.ratingsRequest = ratingsRequest;
-module.exports.ratingsRecord = ratingsRecord;
-module.exports.categoriesRequest = categoriesRequest;
+let recordChannels = function(columnName1, columnName2, columnName3, tableName, data) {
+    let sql;
+    for (let elem of data) {
+        if (data[elem][1]) {
+            sql = `insert into ${tableName} (${columnName1}, ${columnName2}, ${columnName3}) values (${data[elem][0]}, "${elem}", "${data[elem][1]}");`;
+        } else {
+            sql = `insert into ${tableName} (${columnName1}, ${columnName3}) values (${data[elem][0]}, "${elem}");`;
+        }
+        console.log(sql);
+        connection.query(sql, function (error, results, fields) {
+            if (error) throw error;
+        });
+    }
+};
 
-module.exports.idColumnFromTable = idColumnFromTable;
+//module.exports.ratingsRequest = ratingsRequest;
+//module.exports.ratingsRecord = ratingsRecord;
+//module.exports.categoriesRequest = categoriesRequest;
+
+//module.exports.idColumnFromTable = idColumnFromTable;
 
 module.exports.masRecordsInBd = masRecordsInBd;
 module.exports.lastIdInTable = lastIdInTable;
 module.exports.recordInDirectoryDb = recordInDirectoryDb;
+module.exports.recordChannels = recordChannels;
