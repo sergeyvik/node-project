@@ -21,7 +21,7 @@ let xmlFileParse = function(xmlFile) {
             channels.push(channel);
         } else if (el.name === 'programme') {
             const program = {};
-            const children = {}
+            const children = {};
             for (const child of el.children) {
                 children[child.name] = child;
             }
@@ -36,7 +36,7 @@ let xmlFileParse = function(xmlFile) {
     }
 
     for (let channel of channels) {
-        channel.channel_id = Number(channel.channel_id)
+        channel.channel_id = Number(channel.channel_id);
         channel.programs = [];
         for (let program of programs) {
             if (channel.channel_id == program.channel_id) {
@@ -80,7 +80,7 @@ let xmlFileParse = function(xmlFile) {
 let http = require('http');
 let fs = require("fs");
 
-let channelsData = function(channels) {
+let channelsObj = function(channels) {
     let result = {};
     for (let channel of channels) {
         result[channel.channel_name] = [];
@@ -91,7 +91,29 @@ let channelsData = function(channels) {
     }
     return result;
 };
-
+/*
+let programsObj = function(channels) {
+    let result = {};
+    for (let channel of channels) {
+        for (let program of channel.programs) {
+            result[program.program_name] = [];
+            result[program.program_name][0] = channel.channel_id;
+            result[program.program_name][1] = program["program_start"];
+            result[program.program_name][2] = program["program_end"];
+            if (program["category_id"]) {
+                result[program.program_name][3] = program["category_id"];
+            }
+            if (program["rating_id"]) {
+                result[program.program_name][4] = program["rating_id"];
+            }
+            if (program["program_description"]) {
+                result[program.program_name][5] = program["program_description"];
+            }
+        }
+    }
+    return result;
+};
+*/
 let channelsIcons = function(channels) {
     //let uploadDir = "../images/";
     let filesFullPath = [];
@@ -112,7 +134,7 @@ let iconsNames = function(filesFullPath) {
     return filesNames;
 };
 
-let writeIcons = function(filesFullPath, uploadDir) {
+let createIconFiles = function(filesFullPath, uploadDir) {
     filesFullPath.forEach(function (fileFullPath) {
         let fileName = fileFullPath.slice(fileFullPath.lastIndexOf('/') + 1, fileFullPath.length);
         let file = fs.createWriteStream(uploadDir + fileName);
@@ -160,14 +182,13 @@ let arrayForRecordInDb = function (array, object) {
     return result;
 };
 
-let arrayForRecordInDb2 = function (array, object) {
-    let result = [];
-    for (let i = 0; i < array.length; i++) {
-        result.push(array[i].toString());
-    }
-    for (let elem in object) {
-        if (result.indexOf(elem) > -1) {
-            result.splice(result.indexOf(elem), 1);
+let objectForRecordInDb = function (objFromFile, objFromBd) {
+    let result = {};
+    for (let elem in objFromFile) {
+        if (objFromBd[elem] !== undefined) {
+
+        } else {
+            result[elem] = objFromFile[elem];
         }
     }
     return result;
@@ -175,11 +196,12 @@ let arrayForRecordInDb2 = function (array, object) {
 
 module.exports.xmlFileParse = xmlFileParse;
 module.exports.channelsIcons = channelsIcons;
-module.exports.channelsData = channelsData;
+module.exports.channelsObj = channelsObj;
+//module.exports.programsObj = programsObj;
 module.exports.iconsNames = iconsNames;
-module.exports.writeIcons = writeIcons;
+module.exports.createIconFiles = createIconFiles;
 module.exports.programsRatings = programsRatings;
 module.exports.programsCategories = programsCategories;
 module.exports.arrayForRecordInDb = arrayForRecordInDb;
-module.exports.arrayForRecordInDb2 = arrayForRecordInDb2;
+module.exports.objectForRecordInDb = objectForRecordInDb;
 

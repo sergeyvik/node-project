@@ -7,77 +7,55 @@ const connection = mysql.createConnection({
     port: 3308
 });
 connection.connect();
-/*
-connection.connect();
 
-let query = connection.query("SELECT * FROM `ratings`", function (error, results, fields) {
-    if(error) throw error;
-    console.log(JSON.stringify(results));
-    console.log(JSON.stringify(fields));
-});
-connection.end();
-*/
-/*
-let idColumnFromTable = function(columnName, tableName, callback) {
-    connection.query(`SELECT ${columnName} FROM ${tableName}`, function (error, results, fields) {
-        if(error) throw error;
-        callback(results.map(x=>x[columnName]));
-    });
-};
-*/
-/*
-let ratingsRequest = function(callback) {
-    connection.query("SELECT rating_id, program_rating FROM ratings", function (error, results, fields) {
-        let result = {};
-        if(error) {
-            throw error;
-        } else {
-            for (let elem of results) {
-                let name = "";
-                name += elem.program_rating;
-                result[name] = elem.rating_id;
-            }
-            callback(result);
-        }
-    });
-};
-*/
-/*
-let ratingsRecord = function(data, callback) {
-    let id = 0;
-    this.ratingsRequest((results) => {
-        for (let elem of JSON.stringify(results)) {
-            if (elem.rating_id > id) {
-               id = elem.rating_id + 1;
-            }
-        }
-    });
-    let request = "";
-    for (let elem of data) {
-        request += `insert into ratings (rating_id, program_rating) values (${id}, "${elem}");`;
-        id++;
-    }
-    connection.query(request, function (error, results, fields) {
-        if(error) throw error;
-        //console.log(JSON.stringify(results));
-        //console.log(JSON.stringify(fields));
-        callback(results);
-    });
-};
-
-let categoriesRequest = function(callback) {
-    connection.query("SELECT * FROM `category`", function (error, results, fields) {
-        if(error) throw error;
-        callback(results);
-    });
-};
-*/
 let masRecordsInBd = function(columnName1, columnName2, tableName, callback) {
     connection.query(`SELECT ${columnName1}, ${columnName2} FROM ${tableName}`, function (error, results, fields) {
         let result = {};
         if(error) throw error;
         for (let elem of results) {
             result[elem[columnName2]] = elem[columnName1];
+        }
+        callback(result);
+    });
+};
+
+let tableContentObj = function(tableName, callback) {
+    connection.query(`SELECT * FROM ${tableName}`, function (error, results, fields) {
+        let result = {};
+        if(error) throw error;
+        if (tableName === "ratings") {
+            for (let elem of results) {
+                result[elem["program_rating"]] = elem["rating_id"];
+            }
+        } else if (tableName === "categories") {
+            for (let elem of results) {
+                result[elem["program_category"]] = elem["category_id"];
+            }
+        } else if (tableName === "channels") {
+            for (let elem of results) {
+                result[elem["channel_name"]] = [];
+                result[elem["channel_name"]][0] = elem["channel_id"];
+                if (elem["channel_icon"]) {
+                    result[elem["channel_name"]][1] = elem["channel_icon"];
+                }
+            }
+        } else if (tableName === "programs") {
+            for (let elem of results) {
+                result[elem["program_name"]] = [];
+                result[elem["program_name"]][0] = elem["program_id"];
+                result[elem["channel_name"]][1] = elem["channel_id"];
+                result[elem["program_start"]][2] = elem["program_start"];
+                result[elem["program_end"]][3] = elem["program_end"];
+                if (elem["category_id"]) {
+                    result[elem["category_id"]][4] = elem["category_id"];
+                }
+                if (elem["rating_id"]) {
+                    result[elem["rating_id"]][5] = elem["rating_id"];
+                }
+                if (elem["program_description"]) {
+                    result[elem["program_description"]][6] = elem["program_description"];
+                }
+            }
         }
         callback(result);
     });
@@ -111,28 +89,47 @@ let recordInDirectoryDb = function(columnName1, columnName2, tableName, data, id
     }
 };
 
-let recordChannels = function(columnName1, columnName2, columnName3, tableName, data) {
+let recordChannels = function(data) {
     let sql;
-    for (let elem of data) {
+    for (let elem in data) {
         if (data[elem][1]) {
-            sql = `insert into ${tableName} (${columnName1}, ${columnName2}, ${columnName3}) values (${data[elem][0]}, "${elem}", "${data[elem][1]}");`;
+            sql = `insert into channels (channel_id, channel_name, channel_icon) values (${data[elem][0]}, "${elem}", "${data[elem][1]}");`;
         } else {
-            sql = `insert into ${tableName} (${columnName1}, ${columnName3}) values (${data[elem][0]}, "${elem}");`;
+            sql = `insert into channels (channel_id, channel_name) values (${data[elem][0]}, "${elem}");`;
         }
-        console.log(sql);
         connection.query(sql, function (error, results, fields) {
             if (error) throw error;
         });
     }
 };
 
-//module.exports.ratingsRequest = ratingsRequest;
-//module.exports.ratingsRecord = ratingsRecord;
-//module.exports.categoriesRequest = categoriesRequest;
+let requestPrograms = function(channelId, programName, programStart, callback) {
+    let sql = `SELECT * FROM tvp_db.programs WHERE channel_id = ${channelId} AND program_start = ${programStart} AND program_name = "${programName}";`;
+    console.log(sql);
+    connection.query(sql, function(error, results, fields) {
+        console.log(results);
+        if (error) throw error;
+        callback(results);
+    });
+};
 
-//module.exports.idColumnFromTable = idColumnFromTable;
+let recordPrograms = function(program_id, channel_id, program_name, program_start, program_end, category_id, rating_id, program_description) {
+    let sql;
+    if (program_description) {
+        sql = `insert into programs (program_id, channel_id, program_name, program_start, program_end, category_id, rating_id, program_description) values (${program_id}, ${channel_id}, "${program_name}", ${program_start}, ${program_end}, ${category_id?category_id:null}, ${rating_id?rating_id:null}, ${program_description});`;
+    } else
+        sql = `insert into programs (program_id, channel_id, program_name, program_start, program_end, category_id, rating_id) values (${program_id}, ${channel_id}, "${program_name}", ${program_start}, ${program_end}, ${category_id?category_id:null}, ${rating_id?rating_id:null});`;
+    console.log(sql);
+    connection.query(sql, function (error, results, fields) {
+        if (error) throw error;
+    });
+};
 
+
+module.exports.tableContentObj = tableContentObj;
 module.exports.masRecordsInBd = masRecordsInBd;
 module.exports.lastIdInTable = lastIdInTable;
 module.exports.recordInDirectoryDb = recordInDirectoryDb;
 module.exports.recordChannels = recordChannels;
+module.exports.recordPrograms = recordPrograms;
+module.exports.requestPrograms = requestPrograms;

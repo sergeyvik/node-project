@@ -39,10 +39,10 @@ mysqlFunc.idColumnFromTable("rating_id", "ratings", test1 => {
     //console.log(test[0].id);
 //});
 //Получаем массив наименований справочника
-mysqlFunc.masRecordsInBd("rating_id", "program_rating", "ratings", test => {
+mysqlFunc.tableContentObj("ratings", test => {
     //console.log(test);
 });
-mysqlFunc.masRecordsInBd("category_id", "program_category", "categories", test => {
+mysqlFunc.tableContentObj("channels", test => {
     //console.log(test);
 });
 
@@ -68,6 +68,12 @@ var connection = mysql.createConnection({
 });
 
 connection.connect();
+*/
+
+mysqlFunc.requestPrograms(1,1,1,res => {
+  console.log(res);
+})
+/*
 var query = connection.query("SELECT * FROM `ratings`", function (error, results, fields) {
     if(error) throw error;
     console.log(JSON.stringify(results));
@@ -75,7 +81,13 @@ var query = connection.query("SELECT * FROM `ratings`", function (error, results
 });
 connection.end();
 */
-
+/*
+var query = connection.query("SHOW COLUMNS FROM ratings;", function (error, results, fields) {
+    if(error) throw error;
+    //console.log(results[0].Field);
+    //console.log(query);
+});
+*/
 /*
 app.post("/", function (req, res) {
     console.log(req.headers['content-length']);

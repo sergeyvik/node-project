@@ -14,7 +14,7 @@ router.post("/", function (req, res) {
     let filesFullPath = xmlparse.channelsIcons(data);
     //Список иконок из файла, для сравнения со списком существующих иконок
     let filesNames = xmlparse.iconsNames(filesFullPath);
-    xmlparse.writeIcons(filesFullPath, "public/images/");
+    xmlparse.createIconFiles(filesFullPath, "public/images/");
 
     mysqlFunc.masRecordsInBd("rating_id", "program_rating", "ratings", res => {
         let ratingsInFile = xmlparse.programsRatings(data);
@@ -37,14 +37,43 @@ router.post("/", function (req, res) {
     });
 
     mysqlFunc.masRecordsInBd("channel_id", "channel_name", "channels", res => {
-        let channelsInFiles = xmlparse.channelsData(data);
-        console.log(channelsInFiles);
-        console.log(res);
-        let channelsForRecords = xmlparse.arrayForRecordInDb(channelsInFiles, res);
-        mysqlFunc.recordChannels("channel_id", "channel_icon", "channel_name", "channels", channelsForRecords);
-        console.log(channelsForRecords);
-
+        let channelsInFiles = xmlparse.channelsObj(data);
+        let channelsForRecords = xmlparse.objectForRecordInDb(channelsInFiles, res);
+        mysqlFunc.recordChannels(channelsForRecords);
     });
+
+    let id;
+    let ratingData;
+    let categoryData;
+    let channelData;
+
+    mysqlFunc.masRecordsInBd("rating_id", "program_rating", "ratings", res => {
+        ratingData = res;
+    });
+    mysqlFunc.masRecordsInBd("category_id", "program_category", "categories", res => {
+        categoryData = res;
+    });
+    mysqlFunc.masRecordsInBd("channel_id", "channel_name", "channels", res => {
+        channelData = res;
+    });
+    mysqlFunc.lastIdInTable("rating_id", "ratings", res => {
+        if (res === null) {
+            id = 1;
+        } else {
+            id = res + 1;
+        }
+    });
+
+    for (let channel of data) {
+        for (let program of channel.programs) {
+            mysqlFunc.requestPrograms(channel.channel_id, program.program_name, program.program_start, res => {
+               if (res.length ===0) {
+                   mysqlFunc.recordPrograms(id, channel.channel_id, program.program_name, program.program_start, program.program_end, categoryData[program.program_category], ratingData[program.program_rating], program.program_description);
+                   id++;
+               }
+            });
+        }
+    }
 
     res.end();
 });
