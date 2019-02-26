@@ -93,30 +93,42 @@ let recordChannels = function(data) {
     let sql;
     for (let elem in data) {
         if (data[elem][1]) {
-            sql = `insert into channels (channel_id, channel_name, channel_icon) values (${data[elem][0]}, "${elem}", "${data[elem][1]}");`;
+            sql = `insert into channels (channel_id, channel_name, channel_icon) values (?, ?, ?)`;
+            connection.query(sql, [data[elem][0], elem, data[elem][1]], function (error, results, fields) {
+                if (error) throw error;
+            });
         } else {
-            sql = `insert into channels (channel_id, channel_name) values (${data[elem][0]}, "${elem}");`;
+            sql = `insert into channels (channel_id, channel_name) values (?, ?)`;
+            connection.query(sql,[data[elem][0], elem], function (error, results, fields) {
+                if (error) throw error;
+            });
         }
-        connection.query(sql, function (error, results, fields) {
-            if (error) throw error;
-        });
     }
 };
 
 let requestPrograms = function(channelId, programName, programStart, callback) {
-    let sql = `SELECT * FROM tvp_db.programs WHERE channel_id = ${channelId} AND program_start = ${programStart} AND program_name = "${programName}";`;
-    console.log(sql);
-    connection.query(sql, function(error, results, fields) {
-        console.log(results);
+    let sql = `SELECT * FROM tvp_db.programs WHERE channel_id = ? AND program_start = ? AND program_name = ?`;
+    //console.log(`sql`);
+    //console.log(sql);
+    connection.query(sql,[channelId, programStart, programName], function(error, results, fields) {
+        //console.log(`Результат`);
+        //console.log(results);
         if (error) throw error;
         callback(results);
     });
 };
 
 let recordPrograms = function(program_id, channel_id, program_name, program_start, program_end, category_id, rating_id, program_description) {
+    let sql = `insert into programs (program_id, channel_id, program_name, program_start, program_end, category_id, rating_id, program_description) values (?, ?, ?, ?, ?, ?, ?, ?)`;
+    connection.query(sql, [program_id, channel_id, program_name, program_start, program_end, category_id, rating_id, program_description], function (error, results, fields) {
+        if (error) throw error;
+    });
+};
+/*
+let recordPrograms = function(program_id, channel_id, program_name, program_start, program_end, category_id, rating_id, program_description) {
     let sql;
     if (program_description) {
-        sql = `insert into programs (program_id, channel_id, program_name, program_start, program_end, category_id, rating_id, program_description) values (${program_id}, ${channel_id}, "${program_name}", ${program_start}, ${program_end}, ${category_id?category_id:null}, ${rating_id?rating_id:null}, ${program_description});`;
+        sql = `insert into programs (program_id, channel_id, program_name, program_start, program_end, category_id, rating_id, program_description) values (${program_id}, ${channel_id}, "${program_name}", ${program_start}, ${program_end}, ${category_id?category_id:null}, ${rating_id?rating_id:null}, "${program_description}");`;
     } else
         sql = `insert into programs (program_id, channel_id, program_name, program_start, program_end, category_id, rating_id) values (${program_id}, ${channel_id}, "${program_name}", ${program_start}, ${program_end}, ${category_id?category_id:null}, ${rating_id?rating_id:null});`;
     console.log(sql);
@@ -124,7 +136,7 @@ let recordPrograms = function(program_id, channel_id, program_name, program_star
         if (error) throw error;
     });
 };
-
+*/
 
 module.exports.tableContentObj = tableContentObj;
 module.exports.masRecordsInBd = masRecordsInBd;

@@ -70,9 +70,6 @@ var connection = mysql.createConnection({
 connection.connect();
 */
 
-mysqlFunc.requestPrograms(1,1,1,res => {
-  console.log(res);
-})
 /*
 var query = connection.query("SELECT * FROM `ratings`", function (error, results, fields) {
     if(error) throw error;
