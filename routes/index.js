@@ -82,4 +82,24 @@ router.post("/", function (req, res) {
     res.end();
 });
 
+router.get('/test', async function(req, res, next) {
+    var results1 = await mysqlFunc.query('SELECT * FROM ratings LIMIT ?', [2]);
+    var results2 = await mysqlFunc.query('SELECT * FROM programs LIMIT ?', [3]);
+    res.json({results1, results2});
+});
+
+router.get('/test3',  function(req, res, next) {
+    mysqlFunc.query('SELECT * FROM ratings LIMIT ?', [5]).then((results1) => {
+         mysqlFunc.query('SELECT * FROM programs LIMIT ?', [5]).then((results2)=>{
+             res.json({results1, results2});
+        });
+    });
+});
+
+router.get('/test2', function(req, res, next) {
+    mysqlFunc.lastIdInTable('rating_id', 'ratings', (results) => {
+        res.json(results);
+    });
+});
+
 module.exports = router;

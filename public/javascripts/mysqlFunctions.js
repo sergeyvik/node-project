@@ -138,6 +138,20 @@ let recordPrograms = function(program_id, channel_id, program_name, program_star
 };
 */
 
+let query = function(sql, params = []) {
+    return new Promise((resolve, reject) => {
+        connection.query(sql,params, function(error, results, fields) {
+            //console.log(`Результат`);
+            //console.log(results);
+            if (error) {
+                reject(error);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+};
+
 module.exports.tableContentObj = tableContentObj;
 module.exports.masRecordsInBd = masRecordsInBd;
 module.exports.lastIdInTable = lastIdInTable;
@@ -145,3 +159,4 @@ module.exports.recordInDirectoryDb = recordInDirectoryDb;
 module.exports.recordChannels = recordChannels;
 module.exports.recordPrograms = recordPrograms;
 module.exports.requestPrograms = requestPrograms;
+module.exports.query = query;
