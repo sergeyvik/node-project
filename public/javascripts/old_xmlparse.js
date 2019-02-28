@@ -41,25 +41,18 @@ let xmlFileParse = function(xmlFile) {
         for (let program of programs) {
             if (channel.channel_id == program.channel_id) {
                 delete program.channel_id;
-                let date = new Date(Date.UTC(program.program_start.slice(0, 4), program.program_start.slice(4, 6) - 1,
-                    program.program_start.slice(6, 8), program.program_start.slice(8, 10),
-                    program.program_start.slice(10, 12), program.program_start.slice(12, 14)));
+                let date = new Date(Date.UTC(program.program_start.slice(0, 4), program.program_start.slice(4, 6) - 1, program.program_start.slice(6, 8), program.program_start.slice(8, 10), program.program_start.slice(10, 12), program.program_start.slice(12, 14)));
                 if (program.program_start.slice(15, 16) == "+") {
-                    date.setMilliseconds(-1 * (Number(program.program_start.slice(16, 18))
-                        + (Number(program.program_start.slice(18, 20)) == 0 ? 0 : Number(program.program_start.slice(18, 20) / 60 ))) * 60 * 60 * 1000);
+                    date.setMilliseconds(-1 * (Number(program.program_start.slice(16, 18)) + (Number(program.program_start.slice(18, 20)) == 0 ? 0 : Number(program.program_start.slice(18, 20) / 60 ))) * 60 * 60 * 1000);
                 } else if (program.program_start.slice(15, 16) == "-") {
-                    date.setMilliseconds((Number(program.program_start.slice(16, 18))
-                        + (Number(program.program_start.slice(18, 20)) == 0 ? 0 : Number(program.program_start.slice(18, 20) / 60 ))) * 60 * 60 * 1000);
+                    date.setMilliseconds((Number(program.program_start.slice(16, 18)) + (Number(program.program_start.slice(18, 20)) == 0 ? 0 : Number(program.program_start.slice(18, 20) / 60 ))) * 60 * 60 * 1000);
                 }
                 program.program_start = date.valueOf();
-                date = new Date(Date.UTC(program.program_end.slice(0, 4), program.program_end.slice(4, 6) - 1,
-                    program.program_end.slice(6, 8), program.program_end.slice(8, 10), program.program_end.slice(10, 12)));
+                date = new Date(Date.UTC(program.program_end.slice(0, 4), program.program_end.slice(4, 6) - 1, program.program_end.slice(6, 8), program.program_end.slice(8, 10), program.program_end.slice(10, 12)));
                 if (program.program_end.slice(15, 16) == "+") {
-                    date.setMilliseconds(-1 * (Number(program.program_end.slice(16, 18))
-                        + (Number(program.program_end.slice(18, 20)) == 0 ? 0 : Number(program.program_end.slice(18, 20) / 60 ))) * 60 * 60 * 1000);
+                    date.setMilliseconds(-1 * (Number(program.program_end.slice(16, 18)) + (Number(program.program_end.slice(18, 20)) == 0 ? 0 : Number(program.program_end.slice(18, 20) / 60 ))) * 60 * 60 * 1000);
                 } else if (program.program_end.slice(15, 16) == "-") {
-                    date.setMilliseconds((Number(program.program_end.slice(16, 18))
-                        + (Number(program.program_end.slice(18, 20)) == 0 ? 0 : Number(program.program_end.slice(18, 20) / 60 ))) * 60 * 60 * 1000);
+                    date.setMilliseconds((Number(program.program_end.slice(16, 18)) + (Number(program.program_end.slice(18, 20)) == 0 ? 0 : Number(program.program_end.slice(18, 20) / 60 ))) * 60 * 60 * 1000);
                 }
                 program.program_end = date.valueOf();
                 if (program.program_name.indexOf('(12+)') > -1) {
@@ -98,25 +91,29 @@ let channelsObj = function(channels) {
     }
     return result;
 };
-
-let directoryObj = function(data) {
+/*
+let programsObj = function(channels) {
     let result = {};
-    for (let channel of data) {
-        result[channel.cmp] =channel.id;
+    for (let channel of channels) {
+        for (let program of channel.programs) {
+            result[program.program_name] = [];
+            result[program.program_name][0] = channel.channel_id;
+            result[program.program_name][1] = program["program_start"];
+            result[program.program_name][2] = program["program_end"];
+            if (program["category_id"]) {
+                result[program.program_name][3] = program["category_id"];
+            }
+            if (program["rating_id"]) {
+                result[program.program_name][4] = program["rating_id"];
+            }
+            if (program["program_description"]) {
+                result[program.program_name][5] = program["program_description"];
+            }
+        }
     }
     return result;
 };
-
-let setId = function(id) {
-    let i;
-    if (id[0].id === null) {
-        i = 1;
-    } else {
-        i = id[0].id + 1;
-    }
-    return i;
-};
-
+*/
 let channelsIcons = function(channels) {
     //let uploadDir = "../images/";
     let filesFullPath = [];
@@ -172,45 +169,39 @@ let programsCategories = function(channels) {
     return categories;
 };
 
-let prepareForRecord = function (fromFileData, fromBdData, id) {
-    let objectResult = {};
-    let i = id;
-    if (fromFileData.length !== undefined) {
-        let result = [];
-        for (let i = 0; i < fromFileData.length; i++) {
-            result.push(fromFileData[i]);
+let arrayForRecordInDb = function (array, object) {
+    let result = [];
+    for (let i = 0; i < array.length; i++) {
+        result.push(array[i].toString());
+    }
+    for (let elem in object) {
+        if (result.indexOf(elem) > -1) {
+            result.splice(result.indexOf(elem), 1);
         }
-        for (let elem of fromBdData) {
-            if (result.indexOf(elem.cmp) > -1) {
-                result.splice(result.indexOf(elem.cmp), 1);
-            }
-        }
-        for (let elem of result) {
-            objectResult[i] = elem;
-            i++;
-            }
+    }
+    return result;
+};
+
+let objectForRecordInDb = function (objFromFile, objFromBd) {
+    let result = {};
+    for (let elem in objFromFile) {
+        if (objFromBd[elem] !== undefined) {
+
         } else {
-            for (let elem in fromFileData) {
-                objectResult[elem] = fromFileData[elem];
-            }
-            for (let elem of fromBdData) {
-                if (objectResult[elem.cmp]) {
-                    delete objectResult[elem.cmp];
-                }
-            }
+            result[elem] = objFromFile[elem];
         }
-    return objectResult;
+    }
+    return result;
 };
 
 module.exports.xmlFileParse = xmlFileParse;
 module.exports.channelsIcons = channelsIcons;
 module.exports.channelsObj = channelsObj;
-module.exports.directoryObj = directoryObj;
-module.exports.setId = setId;
+//module.exports.programsObj = programsObj;
 module.exports.iconsNames = iconsNames;
 module.exports.createIconFiles = createIconFiles;
 module.exports.programsRatings = programsRatings;
 module.exports.programsCategories = programsCategories;
-module.exports.prepareForRecord = prepareForRecord;
-
+module.exports.arrayForRecordInDb = arrayForRecordInDb;
+module.exports.objectForRecordInDb = objectForRecordInDb;
 

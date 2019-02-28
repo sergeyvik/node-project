@@ -13,71 +13,88 @@ router.get('/', function(req, res, next) {
 
 router.post("/", function (req, res) {
     data = xmlparse.xmlFileParse(req.files.fileXML.data.toString());
-    fs.writeFileSync("test49.json", JSON.stringify(data, null, 2), "utf8")
+    fs.writeFileSync("test49.json", JSON.stringify(data, null, 2), "utf8");
     let filesFullPath = xmlparse.channelsIcons(data);
     //Список иконок из файла, для сравнения со списком существующих иконок
     let filesNames = xmlparse.iconsNames(filesFullPath);
     xmlparse.createIconFiles(filesFullPath, "public/images/");
 
-    mysqlFunc.masRecordsInBd("rating_id", "program_rating", "ratings", res => {
+    mysqlFunc.query('SELECT rating_id, program_rating AS cmp FROM ratings', []).then((results1) => {
         let ratingsInFile = xmlparse.programsRatings(data);
-        let ratingsForRecords = xmlparse.arrayForRecordInDb(ratingsInFile, res);
-
-        mysqlFunc.lastIdInTable("rating_id", "ratings", res => {
-            for (let elem of ratingsForRecords) {
-                elem = Number(elem);
+        mysqlFunc.query('SELECT max(rating_id) as id FROM ratings', []).then((results2)=>{
+            let id = xmlparse.setId(results2);
+            let ratingsForRecords = xmlparse.prepareForRecord(ratingsInFile, results1, id);
+            try {
+                for (let value in ratingsForRecords) {
+                    mysqlFunc.query('INSERT INTO ratings (rating_id, program_rating) values (?, ?)', [value,
+                        ratingsForRecords[value]]).then((results3)=>{
+                    });
+                }
             }
-            mysqlFunc.recordInDirectoryDb("rating_id", "program_rating", "ratings", ratingsForRecords, res[0].id);
+            catch (err) {
+            }
         });
     });
 
-    mysqlFunc.masRecordsInBd("category_id", "program_category", "categories", res => {
+    mysqlFunc.query('SELECT category_id, program_category AS cmp FROM categories', []).then((results1) => {
         let categoriesInFile = xmlparse.programsCategories(data);
-        let categoriesForRecords = xmlparse.arrayForRecordInDb(categoriesInFile, res);
-        mysqlFunc.lastIdInTable("category_id", "categories", res => {
-            mysqlFunc.recordInDirectoryDb("category_id", "program_category", "categories", categoriesForRecords, res[0].id);
+        mysqlFunc.query('SELECT max(category_id) as id FROM categories', []).then((results2)=>{
+            let id = xmlparse.setId(results2);
+            let categoriesForRecords = xmlparse.prepareForRecord(categoriesInFile, results1, id);
+            try {
+                for (let value in categoriesForRecords) {
+                    mysqlFunc.query('INSERT INTO categories (category_id, program_category) values (?, ?)', [value,
+                        categoriesForRecords[value]]).then((results3)=>{
+                    });
+                }
+            }
+            catch (err) {
+            }
         });
     });
 
-    mysqlFunc.masRecordsInBd("channel_id", "channel_name", "channels", res => {
-        let channelsInFiles = xmlparse.channelsObj(data);
-        let channelsForRecords = xmlparse.objectForRecordInDb(channelsInFiles, res);
-        console.log(channelsForRecords);
-        mysqlFunc.recordChannels(channelsForRecords);
-    });
-
-    let id;
-    let ratingData;
-    let categoryData;
-    let channelData;
-
-    mysqlFunc.masRecordsInBd("rating_id", "program_rating", "ratings", res => {
-        ratingData = res;
-    });
-    mysqlFunc.masRecordsInBd("category_id", "program_category", "categories", res => {
-        categoryData = res;
-    });
-    mysqlFunc.masRecordsInBd("channel_id", "channel_name", "channels", res => {
-        channelData = res;
-    });
-    mysqlFunc.lastIdInTable("program_id", "programs", res => {
-        console.log(res);
-        if (res[0].id === null) {
-            id = 1;
-        } else {
-            id = res[0].id + 1;
-        }
-        for (let channel of data) {
-            for (let program of channel.programs) {
-                mysqlFunc.requestPrograms(channel.channel_id, program.program_name, program.program_start, res => {
-                    if (res.length ===0) {
-                        mysqlFunc.recordPrograms(id, channel.channel_id, program.program_name, program.program_start, program.program_end, categoryData[program.program_category], ratingData[program.program_rating], program.program_description);
-                        id++;
-                    }
-                });
+    mysqlFunc.query('SELECT channel_id, channel_name AS cmp, channel_icon FROM channels', []).then((results1) => {
+        let channelsInFile = xmlparse.channelsObj(data);
+        mysqlFunc.query('SELECT max(channel_id) as id FROM channels', []).then((results2)=>{
+            let id = xmlparse.setId(results2);
+            let channelsForRecords = xmlparse.prepareForRecord(channelsInFile, results1, id);
+            try {
+                for (let value in channelsForRecords) {
+                    mysqlFunc.query('INSERT INTO channels (channel_id, channel_name, channel_icon) values (?, ?, ?)' +
+                        ' ON DUPLICATE KEY UPDATE channel_name=?, channel_icon=?', [channelsForRecords[value][0],
+                        value, channelsForRecords[value][1]?channelsForRecords[value][1]:null, value,
+                        channelsForRecords[value][1]?channelsForRecords[value][1]:null]).then((results3)=>{
+                    });
+                }
             }
-        }
+            catch (err) {
+            }
+        });
     });
+
+    setTimeout(function() {
+        mysqlFunc.query('SELECT rating_id, program_rating AS cmp FROM ratings', []).then((results1) => {
+            let ratingData = xmlparse.directoryObj(results1);
+            mysqlFunc.query('SELECT category_id, program_category AS cmp FROM categories', []).then((results2) => {
+                let categoryData = xmlparse.directoryObj(results2);
+                for (let channel of data) {
+                    for (let program of channel.programs) {
+                        mysqlFunc.query('INSERT INTO programs (channel_id, program_name, program_start, program_end,' +
+                            ' category_id, rating_id, program_description) VALUES (?, ?, ?, ?, ?, ?, ?)' +
+                            ' ON DUPLICATE KEY UPDATE category_id=?, rating_id=?', [channel.channel_id, program.program_name,
+                            program.program_start, program.program_end,
+                            categoryData[program.program_category]?categoryData[program.program_category]:null,
+                            ratingData[program.program_rating]?ratingData[program.program_rating]:null,
+                            program.program_description?program.program_description:null,
+                            categoryData[program.program_category]?categoryData[program.program_category]:null,
+                            ratingData[program.program_rating]?ratingData[program.program_rating]:null,]).then((results3) => {
+                        });
+                    }
+                }
+            });
+        });
+
+    }, 5000);
 
     res.end();
 });

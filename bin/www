@@ -14,6 +14,18 @@ mysqlFunc.ratingsRecord((data, results) => {
     console.log(results);
 });
 */
+setTimeout(function() {
+    mysqlFunc.query('SELECT rating_id AS id, program_rating AS cmp FROM ratings', []).then((results1) => {
+        mysqlFunc.query('SELECT category_id AS id, program_category AS cmp FROM categories', []).then((results2) => {
+            mysqlFunc.query('INSERT INTO programs (channel_id, program_name, program_start, program_end, category_id, rating_id, program_description) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE category_id = 2, rating_id = 1', [3, "ghfgd", 12000, 130000, 1, 2, "sdnfafhgaga jhadfhaf ha"]).then((results3) => {
+
+            });
+        });
+    });
+
+}, 1000);
+
+
 /*
 let cat = [ 'Развлекательные',
     'Информационные',
@@ -38,13 +50,6 @@ mysqlFunc.idColumnFromTable("rating_id", "ratings", test1 => {
 //mysqlFunc.lastIdInTable("rating_id", "ratings", test => {
     //console.log(test[0].id);
 //});
-//Получаем массив наименований справочника
-mysqlFunc.tableContentObj("ratings", test => {
-    //console.log(test);
-});
-mysqlFunc.tableContentObj("channels", test => {
-    //console.log(test);
-});
 
 let qwer = ['0+', 18, '12+', 0];
 let asdf = { '0+': 0, '18+': 1, '18': 2 };
