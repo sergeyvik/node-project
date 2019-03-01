@@ -72,31 +72,45 @@ router.post("/", function (req, res) {
         });
     });
 
-    setTimeout(function() {
-        mysqlFunc.query('SELECT rating_id, program_rating AS cmp FROM ratings', []).then((results1) => {
-            let ratingData = xmlparse.directoryObj(results1);
-            mysqlFunc.query('SELECT category_id, program_category AS cmp FROM categories', []).then((results2) => {
-                let categoryData = xmlparse.directoryObj(results2);
-                for (let channel of data) {
-                    for (let program of channel.programs) {
-                        mysqlFunc.query('INSERT INTO programs (channel_id, program_name, program_start, program_end,' +
-                            ' category_id, rating_id, program_description) VALUES (?, ?, ?, ?, ?, ?, ?)' +
-                            ' ON DUPLICATE KEY UPDATE category_id=?, rating_id=?', [channel.channel_id, program.program_name,
-                            program.program_start, program.program_end,
-                            categoryData[program.program_category]?categoryData[program.program_category]:null,
-                            ratingData[program.program_rating]?ratingData[program.program_rating]:null,
-                            program.program_description?program.program_description:null,
-                            categoryData[program.program_category]?categoryData[program.program_category]:null,
-                            ratingData[program.program_rating]?ratingData[program.program_rating]:null,]).then((results3) => {
-                        });
-                    }
-                }
-            });
-        });
+    setTimeout(async function() {
+        let results1 = await mysqlFunc.query('SELECT rating_id AS id, program_rating AS cmp FROM ratings', []);
+        let ratingData = xmlparse.directoryObj(results1);
+        console.log(ratingData);
+        let results2 = await mysqlFunc.query('SELECT category_id AS id, program_category AS cmp FROM categories', []);
+        let categoryData = xmlparse.directoryObj(results2);
+        console.log(categoryData);
+        for (let channel of data) {
+            for (let program of channel.programs) {
+                //console.log(program);
+                console.log(ratingData[program.program_rating]);
+                console.log(categoryData[program.program_category]);
+                //process.stdout.write(".");
+                await mysqlFunc.query('INSERT INTO programs (channel_id, program_name, program_start, program_end,' +
+                    ' category_id, rating_id, program_description) VALUES (?, ?, ?, ?, ?, ?, ?)' +
+                    ' ON DUPLICATE KEY UPDATE category_id=?, rating_id=?', [channel.channel_id, program.program_name,
+                    program.program_start, program.program_end,
+                    categoryData[program.program_category]?categoryData[program.program_category]:null,
+                    ratingData[program.program_rating]?ratingData[program.program_rating]:null,
+                    program.program_description?program.program_description:null,
+                    categoryData[program.program_category]?categoryData[program.program_category]:null,
+                    ratingData[program.program_rating]?ratingData[program.program_rating]:null,]);
+            }
+        }
 
     }, 5000);
 
     res.end();
+});
+
+router.get('/data', async function(req, res, next) {
+    let results1 = await mysqlFunc.query('SELECT rating_id AS id, program_rating AS cmp FROM ratings', []);
+    let results2 = await mysqlFunc.query('SELECT category_id AS id, program_category AS cmp FROM categories', []);
+    let results3 = await mysqlFunc.query('SELECT channel_id AS id, channel_name AS cmp, channel_icon AS icon FROM channels', []);
+    let results4 = await mysqlFunc.query('SELECT program_id, channel_id, program_name, program_start, program_end,' +
+        ' category_id, rating_id, program_description FROM programs WHERE program_start BETWEEN ? AND ?',
+        [req.query.timeFrom, req.query.timeUntil]);
+    let data = xmlparse.tablesToObject(results1, results2, results3, results4);
+    res.json(data);
 });
 
 router.get('/test', async function(req, res, next) {

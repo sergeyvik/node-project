@@ -202,6 +202,53 @@ let prepareForRecord = function (fromFileData, fromBdData, id) {
     return objectResult;
 };
 
+let tablesToObject = function (ratings, categories, channels, programs) {
+    let result = [];
+    let intermediateObj = {};
+    let ratingsObj = {};
+    let categoriesObj = {};
+    if (ratings.length > 0) {
+        for (let rating of ratings) {
+            ratingsObj[rating.id] = rating.cmp;
+        }
+    }
+    if (categories.length > 0) {
+        for (let category of categories) {
+            categoriesObj[category.id] = category.cmp;
+        }
+    }
+    if (channels.length > 0) {
+        for (let channel of channels) {
+            intermediateObj[channel.id] = {};
+            intermediateObj[channel.id].channel_id = channel.id;
+            intermediateObj[channel.id].channel_name = channel.cmp;
+            intermediateObj[channel.id].channel_icon = channel.icon;
+            intermediateObj[channel.id].programs = [];
+        }
+    }
+    if (programs.length > 0) {
+        for (let program of programs) {
+            let pr = {};
+            pr.program_start = program.program_start;
+            pr.program_end = program.program_end;
+            pr.program_name = program.program_name;
+            pr.program_category = categoriesObj[program.category_id]?categoriesObj[program.category_id]:null;
+            pr.program_rating = ratingsObj[program.rating_id]?ratingsObj[program.rating_id]:null;
+            pr.program_description = program.program_description;
+            intermediateObj[program.channel_id].programs.push(pr);
+        }
+    }
+    try {
+        for (let elem in intermediateObj) {
+            result.push(intermediateObj[elem]);
+        }
+        //fs.writeFileSync("test77.json", JSON.stringify(result, null, 2), "utf8");
+    } catch (e) {
+
+    }
+    return result
+};
+
 module.exports.xmlFileParse = xmlFileParse;
 module.exports.channelsIcons = channelsIcons;
 module.exports.channelsObj = channelsObj;
@@ -212,5 +259,5 @@ module.exports.createIconFiles = createIconFiles;
 module.exports.programsRatings = programsRatings;
 module.exports.programsCategories = programsCategories;
 module.exports.prepareForRecord = prepareForRecord;
-
+module.exports.tablesToObject = tablesToObject;
 
