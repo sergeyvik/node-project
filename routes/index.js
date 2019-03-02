@@ -75,15 +75,15 @@ router.post("/", function (req, res) {
     setTimeout(async function() {
         let results1 = await mysqlFunc.query('SELECT rating_id AS id, program_rating AS cmp FROM ratings', []);
         let ratingData = xmlparse.directoryObj(results1);
-        console.log(ratingData);
+        //console.log(ratingData);
         let results2 = await mysqlFunc.query('SELECT category_id AS id, program_category AS cmp FROM categories', []);
         let categoryData = xmlparse.directoryObj(results2);
-        console.log(categoryData);
+        //console.log(categoryData);
         for (let channel of data) {
             for (let program of channel.programs) {
                 //console.log(program);
-                console.log(ratingData[program.program_rating]);
-                console.log(categoryData[program.program_category]);
+                //console.log(ratingData[program.program_rating]);
+                //console.log(categoryData[program.program_category]);
                 //process.stdout.write(".");
                 await mysqlFunc.query('INSERT INTO programs (channel_id, program_name, program_start, program_end,' +
                     ' category_id, rating_id, program_description) VALUES (?, ?, ?, ?, ?, ?, ?)' +
@@ -107,8 +107,30 @@ router.get('/data', async function(req, res, next) {
     let results2 = await mysqlFunc.query('SELECT category_id AS id, program_category AS cmp FROM categories', []);
     let results3 = await mysqlFunc.query('SELECT channel_id AS id, channel_name AS cmp, channel_icon AS icon FROM channels', []);
     let results4 = await mysqlFunc.query('SELECT program_id, channel_id, program_name, program_start, program_end,' +
-        ' category_id, rating_id, program_description FROM programs WHERE program_start BETWEEN ? AND ?',
-        [req.query.timeFrom, req.query.timeUntil]);
+        ' category_id, rating_id, program_description FROM programs WHERE channel_id<? AND program_start BETWEEN ? AND ?',
+        [730, req.query.timeFrom, req.query.timeUntil]);
+    let data = xmlparse.tablesToObject(results1, results2, results3, results4);
+    res.json(data);
+});
+
+router.get('/channel', async function(req, res, next) {
+    let results1 = await mysqlFunc.query('SELECT rating_id AS id, program_rating AS cmp FROM ratings', []);
+    let results2 = await mysqlFunc.query('SELECT category_id AS id, program_category AS cmp FROM categories', []);
+    let results3 = await mysqlFunc.query('SELECT channel_id AS id, channel_name AS cmp, channel_icon AS icon FROM channels WHERE channel_id=?' , [req.query.id]);
+    let results4 = await mysqlFunc.query('SELECT program_id, channel_id, program_name, program_start, program_end,' +
+        ' category_id, rating_id, program_description FROM programs WHERE channel_id=? AND program_start BETWEEN ? AND ?',
+        [req.query.id, req.query.startWeek, req.query.endWeek]);
+    let data = xmlparse.tablesToObject(results1, results2, results3, results4);
+    res.json(data);
+});
+
+router.get('/channels', async function(req, res, next) {
+    let results1 = await mysqlFunc.query('SELECT rating_id AS id, program_rating AS cmp FROM ratings', []);
+    let results2 = await mysqlFunc.query('SELECT category_id AS id, program_category AS cmp FROM categories', []);
+    let results3 = await mysqlFunc.query('SELECT channel_id AS id, channel_name AS cmp, channel_icon AS icon FROM channels', []);
+    let results4 = await mysqlFunc.query('SELECT program_id, channel_id, program_name, program_start, program_end,' +
+        ' category_id, rating_id, program_description FROM programs WHERE channel_id<? AND program_start BETWEEN ? AND ?',
+        [730, req.query.startWeek, req.query.endWeek]);
     let data = xmlparse.tablesToObject(results1, results2, results3, results4);
     res.json(data);
 });

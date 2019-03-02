@@ -29,6 +29,7 @@ setTimeout(function() {
 
 }, 1000);
 */
+/*
 setTimeout(async function() {
     let results1 = await mysqlFunc.query('SELECT rating_id AS id, program_rating AS cmp FROM ratings', []);
     let results2 = await mysqlFunc.query('SELECT category_id AS id, program_category AS cmp FROM categories', []);
@@ -37,7 +38,7 @@ setTimeout(async function() {
         ' category_id, rating_id, program_description FROM programs WHERE program_start BETWEEN 0 AND 1551074400000',);
     let data = xmlparse.tablesToObject(results1, results2, results3, results4);
 }, 1);
-
+*/
 /*
 let cat = [ 'Развлекательные',
     'Информационные',

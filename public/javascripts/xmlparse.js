@@ -240,11 +240,12 @@ let tablesToObject = function (ratings, categories, channels, programs) {
     }
     try {
         for (let elem in intermediateObj) {
-            result.push(intermediateObj[elem]);
+            if (intermediateObj[elem].programs.length > 0) {
+                result.push(intermediateObj[elem]);
+            }
         }
         //fs.writeFileSync("test77.json", JSON.stringify(result, null, 2), "utf8");
     } catch (e) {
-
     }
     return result
 };
