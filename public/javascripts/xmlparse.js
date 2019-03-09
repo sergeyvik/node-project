@@ -229,6 +229,7 @@ let tablesToObject = function (ratings, categories, channels, programs) {
     if (programs.length > 0) {
         for (let program of programs) {
             let pr = {};
+            pr.program_id = program.program_id;
             pr.program_start = program.program_start;
             pr.program_end = program.program_end;
             pr.program_name = program.program_name;
