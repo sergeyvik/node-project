@@ -75,16 +75,10 @@ router.post("/", function (req, res) {
     setTimeout(async function() {
         let results1 = await mysqlFunc.query('SELECT rating_id AS id, program_rating AS cmp FROM ratings', []);
         let ratingData = xmlparse.directoryObj(results1);
-        //console.log(ratingData);
         let results2 = await mysqlFunc.query('SELECT category_id AS id, program_category AS cmp FROM categories', []);
         let categoryData = xmlparse.directoryObj(results2);
-        //console.log(categoryData);
         for (let channel of data) {
             for (let program of channel.programs) {
-                //console.log(program);
-                //console.log(ratingData[program.program_rating]);
-                //console.log(categoryData[program.program_category]);
-                //process.stdout.write(".");
                 await mysqlFunc.query('INSERT INTO programs (channel_id, program_name, program_start, program_end,' +
                     ' category_id, rating_id, program_description) VALUES (?, ?, ?, ?, ?, ?, ?)' +
                     ' ON DUPLICATE KEY UPDATE category_id=?, rating_id=?', [channel.channel_id, program.program_name,
@@ -140,30 +134,31 @@ router.get('/channelsData', async function(req, res, next) {
 router.get('/userData', async function(req, res, next) {
     let results1 = await mysqlFunc.query('SELECT user_id FROM users WHERE user_login=? AND user_password=?',
         [req.query.login, req.query.password]);
-    let results2 = await mysqlFunc.query('SELECT channel_id, starred, hidden FROM users_channels WHERE user_id=?;',
-        [results1[0].user_id]);
-    let userData1 = [];
-    for (let i = 0; i < results2.length; i++) {
-        let data = {};
-        data[results2[i].channel_id] = {};
-        data[results2[i].channel_id].starred = results2[i].starred;
-        data[results2[i].channel_id].hidden = results2[i].hidden;
-        userData1.push(data);
-    }
-    let results3 = await mysqlFunc.query('SELECT reminder_id FROM users_reminders WHERE user_id=?', [results1[0].user_id]);
-    let userData2 = {};
-    for (let i = 0; i < results3.length; i++) {
-        //let data = {};
-        let [row] = await mysqlFunc.query('SELECT * FROM reminders WHERE reminder_id=?',
-            [results3[i].reminder_id]);
-        userData2[row.program_id] = {};
-        userData2[row.program_id].reminder_id = row.reminder_id;
-        userData2[row.program_id].reminder_time = row.reminder_time;
-        userData2[row.program_id].reminder_text = row.reminder_text;
-        userData2[row.program_id].reminder_type = row.reminder_type;
-        //userData2.push(data);
-    }
-    res.json({userData1, userData2});
+    if (results1.length > 0) {
+        let id = results1[0].user_id;
+        let results2 = await mysqlFunc.query('SELECT channel_id, starred, hidden FROM users_channels WHERE user_id=?;',
+            [id]);
+        let userData1 = [];
+        for (let i = 0; i < results2.length; i++) {
+            let data = {};
+            data[results2[i].channel_id] = {};
+            data[results2[i].channel_id].starred = results2[i].starred;
+            data[results2[i].channel_id].hidden = results2[i].hidden;
+            userData1.push(data);
+        }
+        let results3 = await mysqlFunc.query('SELECT reminder_id FROM users_reminders WHERE user_id=?', [id]);
+        let userData2 = {};
+        for (let i = 0; i < results3.length; i++) {
+            let [row] = await mysqlFunc.query('SELECT * FROM reminders WHERE reminder_id=?',
+                [id]);
+            userData2[row.program_id] = {};
+            userData2[row.program_id].reminder_id = row.reminder_id;
+            userData2[row.program_id].reminder_time = row.reminder_time;
+            userData2[row.program_id].reminder_text = row.reminder_text;
+            userData2[row.program_id].reminder_type = row.reminder_type;
+        }
+        res.json({userData1, userData2, id});
+    } else res.json(0);
 });
 
 router.get('/hiddenON', async function(req, res, next) {
@@ -219,7 +214,7 @@ router.get('/checkLogin', async function(req, res, next) {
     res.json(busy);
 });
 
-router.get('/userRecord',  async function(req, res, next) {
+router.get('/userRecord', async function(req, res, next) {
     let results1 = await mysqlFunc.query('SELECT max(user_id) as id FROM users', []);
     let id = xmlparse.setId(results1);
     let results2 = await mysqlFunc.query('INSERT INTO users (user_id, user_name, user_login, user_password, user_mail,' +
@@ -228,10 +223,11 @@ router.get('/userRecord',  async function(req, res, next) {
     res.json();
 });
 
-router.get('/test2', function(req, res, next) {
-    mysqlFunc.lastIdInTable('rating_id', 'ratings', (results) => {
-        res.json(results);
-    });
+router.get('/reminder', async function(req, res, next) {
+    let results1 = await mysqlFunc.query('SELECT p.program_id, c.channel_name, p.program_name, p.program_start,' +
+        ' p.program_end FROM tvp_db.programs AS p LEFT JOIN tvp_db.channels AS c USING(channel_id) WHERE program_id=?',
+        [req.query.program_id]);
+    res.json(results1);
 });
 
 module.exports = router;
