@@ -1,7 +1,7 @@
 let express = require('express');
 let router = express.Router();
-let xmlparse = require('../public/javascripts/xmlparse');
-let mysqlFunc = require('../public/javascripts/mysqlFunctions');
+let xmlparse = require('../xmlparse');
+let mysqlFunc = require('../mysqlFunctions');
 let data;
 
 let fs = require("fs");

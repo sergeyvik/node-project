@@ -7,8 +7,8 @@
 var app = require('../app');
 var debug = require('debug')('node-project:server');
 var http = require('http');
-let mysqlFunc = require('../public/javascripts/mysqlFunctions');
-let xmlparse = require('../public/javascripts/xmlparse');
+let mysqlFunc = require('../mysqlFunctions');
+let xmlparse = require('../xmlparse');
 /*
 mysqlFunc.ratingsRecord((data, results) => {
     console.log(results);

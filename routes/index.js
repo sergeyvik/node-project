@@ -1,14 +1,36 @@
 let express = require('express');
 let router = express.Router();
-let xmlparse = require('../public/javascripts/xmlparse');
-let mysqlFunc = require('../public/javascripts/mysqlFunctions');
+let xmlparse = require('../xmlparse');
+let mysqlFunc = require('../mysqlFunctions');
+const jwt = require('jsonwebtoken');
+const passport = require('passport');
+const generateString = require('generate-strings');
+const sha1 = require('sha1');
 let data;
 
-let fs = require("fs");
+let fs = require('fs');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
+});
+
+router.post('/login', async function(req, res, next) {
+    let results = await mysqlFunc.query('SELECT user_id, user_password, user_salt FROM users WHERE user_login=?',
+        [req.body.params.login]);
+    if (results.length === 1) {
+        let passwordHash = sha1(req.body.params.password + results[0].user_salt);
+        console.log(req.body.params.password, results[0].user_salt, passwordHash, results[0].user_password);
+        if (passwordHash === results[0].user_password) {
+            const payload = {id: results[0].user_id};
+            const token = jwt.sign(payload, 'fkosi8JUTRTU!$@^7346');
+            res.json({token});
+        } else {
+            res.json(null);
+        }
+    } else {
+        res.json(null);
+    }
 });
 
 router.post("/", function (req, res) {
@@ -131,11 +153,12 @@ router.get('/channelsData', async function(req, res, next) {
     res.json(data);
 });
 
-router.get('/userData', async function(req, res, next) {
-    let results1 = await mysqlFunc.query('SELECT user_id FROM users WHERE user_login=? AND user_password=?',
-        [req.query.login, req.query.password]);
-    if (results1.length > 0) {
-        let id = results1[0].user_id;
+router.get('/userData', passport.authenticate('jwt', {session: false}), async function(req, res, next) {
+    // let results1 = await mysqlFunc.query('SELECT user_id FROM users WHERE user_login=? AND user_password=?',
+    //    [req.query.login, req.query.password]);
+    // if (results1.length > 0) {
+    //    let id = results1[0].user_id;
+    let id = req.user.user_id;
         let results2 = await mysqlFunc.query('SELECT channel_id, starred, hidden FROM users_channels WHERE user_id=?;',
             [id]);
         let userData1 = [];
@@ -150,7 +173,7 @@ router.get('/userData', async function(req, res, next) {
         let userData2 = {};
         for (let i = 0; i < results3.length; i++) {
             let [row] = await mysqlFunc.query('SELECT * FROM reminders WHERE reminder_id=?',
-                [id]);
+                [results3[i].reminder_id]);
             userData2[row.program_id] = {};
             userData2[row.program_id].reminder_id = row.reminder_id;
             userData2[row.program_id].reminder_time = row.reminder_time;
@@ -158,48 +181,50 @@ router.get('/userData', async function(req, res, next) {
             userData2[row.program_id].reminder_type = row.reminder_type;
         }
         res.json({userData1, userData2, id});
-    } else res.json(0);
+    //} else res.json(0);
 });
 
-router.get('/hiddenON', async function(req, res, next) {
+router.get('/hiddenON', passport.authenticate('jwt', {session: false}), async function(req, res, next) {
     let results1 = await mysqlFunc.query('INSERT INTO users_channels (channel_id, user_id, starred, hidden) VALUES' +
-        ' (?, ?, ?, ?) ON DUPLICATE KEY UPDATE hidden=?', [req.query.id, req.query.userId, 0, 1, 1]);
+        ' (?, ?, ?, ?) ON DUPLICATE KEY UPDATE hidden=?', [req.query.id, req.user.user_id, 0, 1, 1]);
     res.json();
 });
 
-router.get('/hiddenOFF', async function(req, res, next) {
+router.get('/hiddenOFF', passport.authenticate('jwt', {session: false}), async function(req, res, next) {
     let results1 = await mysqlFunc.query('UPDATE users_channels SET hidden=? WHERE channel_id=? AND user_id=?',
-        [0, req.query.id, req.query.userId]);
+        [0, req.query.id, req.user.user_id]);
     res.json();
 });
 
-router.get('/reminderON', async function(req, res, next) {
+router.get('/reminderON', passport.authenticate('jwt', {session: false}), async function(req, res, next) {
     let results1 = await mysqlFunc.query('SELECT max(reminder_id) as id FROM reminders', []);
     let id = xmlparse.setId(results1);
     let results2 = await mysqlFunc.query('INSERT INTO reminders (reminder_id, program_id, reminder_time, reminder_text,' +
         ' reminder_type) VALUES (?, ?, ?, ?, ?)', [id, req.query.program_id, req.query.time, req.query.text, req.query.type]);
     let results3 = await mysqlFunc.query('INSERT INTO users_reminders (user_id, reminder_id) VALUE (?, ?)',
-        [req.query.userId, id]);
+        [req.user.user_id, id]);
     res.json(id);
 });
 
-router.get('/reminderOFF', async function(req, res, next) {
-    /* let results1 = await mysqlFunc.query('DELETE FROM users_reminders WHERE user_id=? AND reminder_id=?',
-        [req.query.userId, req.query.reminder_id]); */
-    let results2 = await mysqlFunc.query('DELETE FROM reminders WHERE reminder_id=?',
-        [req.query.reminder_id]);
+router.get('/reminderOFF', passport.authenticate('jwt', {session: false}), async function(req, res, next) {
+    let results1 = await mysqlFunc.query('DELETE FROM users_reminders WHERE user_id=? AND reminder_id=?',
+        [req.user.user_id, req.query.reminder_id]);
+    if (results1 && results1.length > 0) {
+        let results2 = await mysqlFunc.query('DELETE FROM reminders WHERE reminder_id=?',
+            [req.query.reminder_id]);
+    }
     res.json();
 });
 
-router.get('/starredON', async function(req, res, next) {
+router.get('/starredON', passport.authenticate('jwt', {session: false}), async function(req, res, next) {
     let results1 = await mysqlFunc.query('INSERT INTO users_channels (channel_id, user_id, starred, hidden) VALUES' +
-        ' (?, ?, ?, ?) ON DUPLICATE KEY UPDATE starred=?', [req.query.id, req.query.userId, 1, 0, 1]);
+        ' (?, ?, ?, ?) ON DUPLICATE KEY UPDATE starred=?', [req.query.id, req.user.user_id, 1, 0, 1]);
     res.json();
 });
 
-router.get('/starredOFF', async function(req, res, next) {
+router.get('/starredOFF', passport.authenticate('jwt', {session: false}), async function(req, res, next) {
     let results1 = await mysqlFunc.query('UPDATE users_channels SET starred=? WHERE channel_id=? AND user_id=?',
-        [0, req.query.id, req.query.userId]);
+        [0, req.query.id, req.user.user_id]);
     res.json();
 });
 
@@ -214,12 +239,15 @@ router.get('/checkLogin', async function(req, res, next) {
     res.json(busy);
 });
 
-router.get('/userRecord', async function(req, res, next) {
+router.post('/userRecord', async function(req, res, next) {
     let results1 = await mysqlFunc.query('SELECT max(user_id) as id FROM users', []);
     let id = xmlparse.setId(results1);
+    let salt = generateString.generate({length: 5});
+    let passwordHash = sha1(req.body.params.password + salt);
+    console.log(passwordHash, req.body.password, salt);
     let results2 = await mysqlFunc.query('INSERT INTO users (user_id, user_name, user_login, user_password, user_mail,' +
-        ' user_admin) VALUES (?, ?, ?, ?, ?, ?)', [id, req.query.name, req.query.login, req.query.password,
-        req.query.email, 0]);
+        ' user_admin, user_salt) VALUES (?, ?, ?, ?, ?, ?, ?)', [id, req.body.params.name, req.body.params.login, passwordHash,
+        req.body.params.email, 0, salt]);
     res.json();
 });
 
