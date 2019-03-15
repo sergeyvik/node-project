@@ -121,10 +121,11 @@ router.post("/", function (req, res) {
 router.get('/data', async function(req, res, next) {
     let results1 = await mysqlFunc.query('SELECT rating_id AS id, program_rating AS cmp FROM ratings', []);
     let results2 = await mysqlFunc.query('SELECT category_id AS id, program_category AS cmp FROM categories', []);
-    let results3 = await mysqlFunc.query('SELECT channel_id AS id, channel_name AS cmp, channel_icon AS icon FROM channels', []);
+    let results3 = await mysqlFunc.query('SELECT channel_id AS id, channel_name AS cmp, channel_icon AS icon FROM' +
+        ' channels', []);
     let results4 = await mysqlFunc.query('SELECT program_id, channel_id, program_name, program_start, program_end,' +
-        ' category_id, rating_id, program_description FROM programs WHERE channel_id<? AND program_start BETWEEN ? AND ?',
-        [730, req.query.timeFrom, req.query.timeUntil]);
+        ' category_id, rating_id, program_description FROM programs WHERE channel_id<? AND program_start BETWEEN' +
+        ' ? AND ?', [730, req.query.timeFrom, req.query.timeUntil]);
     let data = xmlparse.tablesToObject(results1, results2, results3, results4);
     res.json(data);
 });
@@ -132,7 +133,8 @@ router.get('/data', async function(req, res, next) {
 router.get('/channel', async function(req, res, next) {
     let results1 = await mysqlFunc.query('SELECT rating_id AS id, program_rating AS cmp FROM ratings', []);
     let results2 = await mysqlFunc.query('SELECT category_id AS id, program_category AS cmp FROM categories', []);
-    let results3 = await mysqlFunc.query('SELECT channel_id AS id, channel_name AS cmp, channel_icon AS icon FROM channels WHERE channel_id=?' , [req.query.id]);
+    let results3 = await mysqlFunc.query('SELECT channel_id AS id, channel_name AS cmp, channel_icon AS icon FROM' +
+        ' channels WHERE channel_id=?' , [req.query.id]);
     let results4 = await mysqlFunc.query('SELECT program_id, channel_id, program_name, program_start, program_end,' +
         ' category_id, rating_id, program_description FROM programs WHERE channel_id=? AND program_start BETWEEN ? AND ?',
         [req.query.id, req.query.startWeek, req.query.endWeek]);
@@ -143,9 +145,13 @@ router.get('/channel', async function(req, res, next) {
 router.get('/channelsData', async function(req, res, next) {
     let results1 = await mysqlFunc.query('SELECT rating_id AS id, program_rating AS cmp FROM ratings', []);
     let results2 = await mysqlFunc.query('SELECT category_id AS id, program_category AS cmp FROM categories', []);
-    let results3 = await mysqlFunc.query('SELECT channel_id AS id, channel_name AS cmp, channel_icon AS icon FROM channels', []);
+    let results3 = await mysqlFunc.query('SELECT channel_id AS id, channel_name AS cmp, channel_icon AS icon FROM' +
+        ' channels', []);
     let results4 = await mysqlFunc.query('SELECT program_id, channel_id, program_name, program_start, program_end,' +
-        ' category_id, rating_id, program_description FROM programs WHERE channel_id<? AND program_start BETWEEN ? AND ?' +
+        ' category_id, rating_id, program_description FROM programs WHERE (channel_id<? OR channel_id=300003 OR' +
+        ' channel_id=300029 OR channel_id=300030 OR channel_id=300048 OR channel_id=300049 OR channel_id=300053 OR' +
+        ' channel_id=300065 OR channel_id=300029 OR channel_id=300071 OR channel_id=300072 OR channel_id=300075 OR' +
+        ' channel_id=400007 OR channel_id=400020) AND program_start BETWEEN ? AND ?' +
         'AND channel_id <> 237 AND channel_id <> 245 AND channel_id <> 246 AND channel_id <> 247 AND channel_id <> 304' +
         ' AND channel_id <> 446 AND channel_id <> 236 AND channel_id <> 242 AND channel_id <> 243 AND channel_id <> 244' +
         ' AND channel_id <> 274', [730, req.query.startWeek, req.query.endWeek]);
@@ -154,10 +160,6 @@ router.get('/channelsData', async function(req, res, next) {
 });
 
 router.get('/userData', passport.authenticate('jwt', {session: false}), async function(req, res, next) {
-    // let results1 = await mysqlFunc.query('SELECT user_id FROM users WHERE user_login=? AND user_password=?',
-    //    [req.query.login, req.query.password]);
-    // if (results1.length > 0) {
-    //    let id = results1[0].user_id;
     let id = req.user.user_id;
         let results2 = await mysqlFunc.query('SELECT channel_id, starred, hidden FROM users_channels WHERE user_id=?;',
             [id]);
@@ -181,7 +183,6 @@ router.get('/userData', passport.authenticate('jwt', {session: false}), async fu
             userData2[row.program_id].reminder_type = row.reminder_type;
         }
         res.json({userData1, userData2, id});
-    //} else res.json(0);
 });
 
 router.get('/hiddenON', passport.authenticate('jwt', {session: false}), async function(req, res, next) {
@@ -199,8 +200,9 @@ router.get('/hiddenOFF', passport.authenticate('jwt', {session: false}), async f
 router.get('/reminderON', passport.authenticate('jwt', {session: false}), async function(req, res, next) {
     let results1 = await mysqlFunc.query('SELECT max(reminder_id) as id FROM reminders', []);
     let id = xmlparse.setId(results1);
-    let results2 = await mysqlFunc.query('INSERT INTO reminders (reminder_id, program_id, reminder_time, reminder_text,' +
-        ' reminder_type) VALUES (?, ?, ?, ?, ?)', [id, req.query.program_id, req.query.time, req.query.text, req.query.type]);
+    let results2 = await mysqlFunc.query('INSERT INTO reminders (reminder_id, program_id, reminder_time, ' +
+        'reminder_text, reminder_type) VALUES (?, ?, ?, ?, ?)', [id, req.query.program_id, req.query.time,
+        req.query.text, req.query.type]);
     let results3 = await mysqlFunc.query('INSERT INTO users_reminders (user_id, reminder_id) VALUE (?, ?)',
         [req.user.user_id, id]);
     res.json(id);
@@ -246,8 +248,8 @@ router.post('/userRecord', async function(req, res, next) {
     let passwordHash = sha1(req.body.params.password + salt);
     console.log(passwordHash, req.body.password, salt);
     let results2 = await mysqlFunc.query('INSERT INTO users (user_id, user_name, user_login, user_password, user_mail,' +
-        ' user_admin, user_salt) VALUES (?, ?, ?, ?, ?, ?, ?)', [id, req.body.params.name, req.body.params.login, passwordHash,
-        req.body.params.email, 0, salt]);
+        ' user_admin, user_salt) VALUES (?, ?, ?, ?, ?, ?, ?)', [id, req.body.params.name, req.body.params.login,
+        passwordHash, req.body.params.email, 0, salt]);
     res.json();
 });
 
